@@ -2,7 +2,7 @@ import React, {useEffect} from 'react';
 import './App.css';
 import {Game} from './Game';
 import {CasualWorldClient} from './game/world/Casual/CasualWorld.client';
-import {CasualWorldCore} from './game/world/Casual/CasualWorld.core';
+import {CasualWorldCore} from './game/world/CasualWorld.core';
 import {BirdClient, BirdCore} from './game';
 import {CasualPlayerClient} from './game/player';
 

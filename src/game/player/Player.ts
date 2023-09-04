@@ -23,3 +23,26 @@ export abstract class PlayerCore {
 export type PlayerEventMap = {
 	ready: () => void;
 };
+
+export abstract class PlayerClient {
+	displayObject?: PIXI.DisplayObject;
+
+	get isReady() {
+		return this.playerCore?.isReady;
+	}
+
+	constructor(public playerCore: PlayerCore = new CasualPlayerCore()) {
+	}
+
+	playAs(entityClient: EntityClient) {
+		this.playerCore.playAs(entityClient.entityCore);
+	}
+
+	nextTick(tickData: TickData) {
+		this.playerCore.nextTick(tickData);
+	}
+}
+
+export class PlayerServer {
+
+}

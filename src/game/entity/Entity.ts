@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
+import type * as PIXI from 'pixi.js';
 import {type TickData} from '@/types/TickData';
 import {AsyncEE} from '@/util/AsyncEE';
 import {type Response, type Body, SATVector} from 'detect-collisions';
@@ -41,3 +41,31 @@ export type EntityEventMap = {
 	'collision-stay': (entity: EntityCore) => void;
 	'collision-exit': (entity: EntityCore) => void;
 };
+
+export abstract class EntityClient {
+	abstract displayObject: PIXI.DisplayObject;
+
+	constructor(public world: WorldClient, public entityCore: EntityCore) {
+	}
+
+	init(entityCore: EntityCore) {
+		console.log(this.displayObject);
+		this.displayObject.x = entityCore.body.pos.x;
+		this.displayObject.y = entityCore.body.pos.y;
+	}
+
+	initServer(_entityServer: EntityServer) {}
+
+	nextTick(tickData: TickData) {
+		this.entityCore.nextTick(tickData);
+	}
+}
+
+export abstract class EntityServer {
+	constructor() {
+		console.log('BirdCore');
+	}
+
+	nextTick() {
+	}
+}
