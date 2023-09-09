@@ -1,7 +1,6 @@
 import Stats from 'stats.js';
-import {type WorldClient} from './game/index';
 import {type TickData} from './types/TickData';
-import {type PlayerClient} from './game/player/Player/Player.client';
+import {type PlayerClient, type WorldClient} from './game/index';
 
 export class Game {
 	stats = {
@@ -10,6 +9,7 @@ export class Game {
 	};
 
 	isMobile = false;
+	playerClient: PlayerClient | undefined;
 
 	private readonly internal = {
 		tps: 0,
@@ -51,6 +51,7 @@ export class Game {
 				};
 
 				if (playerClient.isReady) {
+					playerClient.playerCore.nextTick(tickData);
 					playerClient.nextTick(tickData);
 					// Update camera
 					// camera.update();
@@ -68,6 +69,7 @@ export class Game {
 					// }
 				}
 
+				worldClient.worldCore.nextTick(tickData);
 				worldClient.nextTick(tickData);
 				internal.elapsedMs += internal.targetDelta;
 			}

@@ -1,10 +1,7 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import './App.css';
 import {Game} from './Game';
-import {CasualWorldClient} from './game/world/Casual/CasualWorld.client';
-import {CasualWorldCore} from './game/world/CasualWorld.core';
-import {BirdClient, BirdCore} from './game';
-import {CasualPlayerClient} from './game/player';
+import {BirdCore, CasualPlayerClient, CasualWorldClient, CasualWorldCore} from './game/index';
 
 const game = new Game();
 
@@ -13,28 +10,35 @@ export const GameContext = React.createContext<{game: Game}>({game});
 window.onload = () => {
 	game
 		.connect()
-		.then(() => {
+		.then(async () => {
 			game.init();
+			document.body.appendChild(game.stats.fps.dom);
+			// Document.body.appendChild(game.stats.ping.dom);
+
 			const gameRoot = document.getElementById('gameRoot')!;
-			const worldClient = new CasualWorldClient(new CasualWorldCore());
-			const birdClient = new BirdClient(worldClient, new BirdCore());
-			const playerClient = new CasualPlayerClient();
+			const worldCore = new CasualWorldCore();
+			const worldClient = new CasualWorldClient(game, worldCore);
+			game.playerClient = new CasualPlayerClient(game);
 
-			worldClient.app.stage.addChild(birdClient.displayObject);
-			worldClient.entities.set(birdClient.entityCore.id, birdClient);
-			worldClient.worldCore.entities.set(birdClient.entityCore.id, birdClient.entityCore);
-			playerClient.playAs(birdClient);
+			worldCore.init();
+			worldClient.init();
+			game.playerClient.init();
 
-			document.addEventListener('keydown', key => {
-				// Alert(1);
-				birdClient.entityCore.fly();
-			});
+			// Server side
+			const birdCore = new BirdCore(worldCore);
+			birdCore.init();
+			await worldClient.worldCore.add(birdCore);
+
+			const birdClient = worldClient.entities.get(birdCore.id);
+			if (birdClient) {
+				game.playerClient.playAs(birdClient);
+			}
 
 			gameRoot.parentNode?.replaceChild(
 				worldClient.app.view as HTMLCanvasElement,
 				gameRoot,
 			);
-			game.start(worldClient, playerClient);
+			game.start(worldClient, game.playerClient);
 		})
 		.catch(console.error);
 };

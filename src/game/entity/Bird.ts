@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import {Circle} from 'detect-collisions';
-import {EntityCore} from './Entity';
+import {EntityCore, EntityClient, EntityServer} from './Entity';
 import {type TickData} from '@/types/TickData';
 
 export class BirdCore extends EntityCore {
@@ -8,32 +8,28 @@ export class BirdCore extends EntityCore {
 	mass = (40 / 40) * 0.8;
 
 	nextTick(_tickData: TickData): void {
-		console.log(_tickData);
 		this.velocity.y += this.mass;
+		if (this.body.pos.y > 800) {
+			this.body.pos.y = 800;
+			this.velocity.y = 0;
+		}
 	}
 
-	fly() {
+	primaryAction() {
+		// Fly
 		this.velocity.y = -10;
 	}
 }
 
 export class BirdClient extends EntityClient {
-	displayObject = PIXI.Sprite.from('public/bird.png');
+	displayObject = PIXI.Sprite.from('images/bird.png');
 	declare entityCore: BirdCore;
 
-	init(entityCore: BirdCore) {
-		super.init(entityCore);
+	init() {
+		super.init();
 		this.displayObject.anchor.set(0.5);
-	}
-
-	nextTick(_tickData: TickData): void {
-		this.displayObject.x = this.entityCore.body.pos.x;
-		this.displayObject.y = this.entityCore.body.pos.y;
 	}
 }
 
 export class BirdServer extends EntityServer {
-	constructor() {
-		console.log('BirdCore');
-	}
 }

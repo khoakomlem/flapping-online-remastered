@@ -1,7 +1,8 @@
 import type * as PIXI from 'pixi.js';
-import {type TickData} from '@/types/TickData';
-import {AsyncEE} from '@/util/AsyncEE';
 import {type Response, type Body, SATVector} from 'detect-collisions';
+import {type TickData} from '@/types/TickData';
+import {type WorldCore, type WorldClient, type WorldServer} from '../world/World';
+import {AsyncEE} from '@/util/AsyncEE';
 
 export abstract class EntityCore {
 	id = String(safeId());
@@ -12,11 +13,9 @@ export abstract class EntityCore {
 
 	abstract body: Body;
 
-	constructor() {
-		console.log('BirdCore');
-	}
+	constructor(public worldCore: WorldCore) {}
 
-	init(_data: Record<string, unknown>) {}
+	init(_data: Record<string, unknown> = {}) {}
 
 	beforeNextTick(_tickData: TickData) {
 		this.body.pos.add(this.velocity);
@@ -27,6 +26,8 @@ export abstract class EntityCore {
 	onCollisionEnter(_entity: EntityCore, _response: Response) {}
 	onCollisionStay(_entity: EntityCore, _response: Response) {}
 	onCollisionExit(_entity: EntityCore, _response: Response) {}
+
+	primaryAction() {}
 }
 
 function safeId() {
@@ -45,27 +46,27 @@ export type EntityEventMap = {
 export abstract class EntityClient {
 	abstract displayObject: PIXI.DisplayObject;
 
-	constructor(public world: WorldClient, public entityCore: EntityCore) {
+	constructor(public worldClient: WorldClient, public entityCore: EntityCore) {
 	}
 
-	init(entityCore: EntityCore) {
-		console.log(this.displayObject);
-		this.displayObject.x = entityCore.body.pos.x;
-		this.displayObject.y = entityCore.body.pos.y;
+	init() {
+		this.displayObject.x = this.entityCore.body.pos.x;
+		this.displayObject.y = this.entityCore.body.pos.y;
 	}
 
 	initServer(_entityServer: EntityServer) {}
 
-	nextTick(tickData: TickData) {
-		this.entityCore.nextTick(tickData);
+	nextTick(_tickData: TickData) {
+		this.displayObject.x = this.entityCore.body.pos.x;
+		this.displayObject.y = this.entityCore.body.pos.y;
 	}
 }
 
 export abstract class EntityServer {
-	constructor() {
-		console.log('BirdCore');
+	constructor(public worldServer: WorldServer, public entityCore: EntityCore) {
 	}
 
-	nextTick() {
+	init() {}
+	nextTick(_tickData: TickData) {
 	}
 }

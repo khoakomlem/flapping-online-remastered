@@ -1,7 +1,10 @@
-import {type EntityCore} from '@/game';
+import * as PIXI from 'pixi.js';
+import {type Response, System, type Body} from 'detect-collisions';
 import {type TickData} from '@/types/TickData';
 import {AsyncEE} from '@/util/AsyncEE';
-import {type Response, System} from 'detect-collisions';
+import {BirdClient, type EntityClient, type EntityCore} from '../entity';
+import {type Game} from '@/Game';
+import {PipeClient} from '../entity/Pipe';
 
 export abstract class WorldCore {
 	entities = new Map<string, EntityCore>();
@@ -11,6 +14,8 @@ export abstract class WorldCore {
 	ee = new AsyncEE<WorldEventMap>();
 	events = new Array<EventData>();
 	isOnline = false;
+
+	init() {}
 
 	nextTick(tickData: TickData) {
 		this.newCollisionHashMap.clear();
@@ -28,8 +33,8 @@ export abstract class WorldCore {
 			this.system.checkOne(
 				entity.body,
 				({...response}: ResponseBodyRefEntity) => {
-					const entityA = response.a.entitiyRef;
-					const entityB = response.b.entitiyRef;
+					const entityA = response.a.entityRef;
+					const entityB = response.b.entityRef;
 
 					if (entityA && entityB) {
 						if (entityA.isStatic && entityB.isStatic) {
@@ -44,9 +49,7 @@ export abstract class WorldCore {
 						} else {
 							this.collisionHashMap.set(uniq, response);
 							entityA.onCollisionEnter(entityB, response);
-							entityA.ee
-								.emit('collision-enter', entityB)
-								.catch(console.error);
+							entityA.ee.emit('collision-enter', entityB).catch(console.error);
 						}
 					}
 				},
@@ -55,8 +58,8 @@ export abstract class WorldCore {
 		this.collisionHashMap.forEach(
 			(response: ResponseBodyRefEntity, uniq: string) => {
 				if (!this.newCollisionHashMap.has(uniq)) {
-					const entityA = response.a.entitiyRef;
-					const entityB = response.b.entitiyRef;
+					const entityA = response.a.entityRef;
+					const entityB = response.b.entityRef;
 					if (entityA && entityB) {
 						const uniq = genId(entityA, entityB);
 						this.collisionHashMap.delete(uniq);
@@ -73,6 +76,7 @@ export abstract class WorldCore {
 		...args: Parameters<WorldEventMap[Ev]>
 	) {
 		if (this.isOnline) {
+			// ignore history events when online, only server world core can
 			return;
 		}
 
@@ -81,6 +85,21 @@ export abstract class WorldCore {
 		this.ee.emit('+events', event).catch(console.error);
 		const values = await this.ee.emit(type, ...args);
 		return values[0];
+	}
+
+	async add(entityCore: EntityCore) {
+		this.system.insert(entityCore.body);
+		this.entities.set(entityCore.id, entityCore);
+		(entityCore as EntityCore & {body: BodyRefEntity}).body.entityRef
+			= entityCore;
+		// Need to reference the entity's id in the body because the body is passed to the System.checkOne callback, not the entity
+		await this.ee.emit('+entities', entityCore).catch(console.error);
+	}
+
+	remove(entityCore: EntityCore) {
+		this.system.remove(entityCore.body);
+		this.entities.delete(entityCore.id);
+		this.ee.emit('-entities', entityCore).catch(console.error);
 	}
 }
 
@@ -100,7 +119,7 @@ type EventData = {
 	args: unknown[];
 };
 
-type BodyRefEntity = Body & {entitiyRef: EntityCore};
+type BodyRefEntity = Body & {entityRef: EntityCore};
 type ResponseBodyRefEntity = Omit<Response, 'a' | 'b'> & {
 	a: BodyRefEntity;
 	b: BodyRefEntity;
@@ -110,11 +129,14 @@ function genId(e1: EntityCore, e2: EntityCore) {
 	return e1.id + e2.id;
 }
 
-const EntityClientClassifiers = {
-	BirdClient,
-};
+/* ---------------------------------------------------------------------------------- */
 
 export abstract class WorldClient {
+	static EntityClientClassifiers = {
+		BirdCore: BirdClient,
+		PipeCore: PipeClient,
+	};
+
 	app = new PIXI.Application({
 		width: window.innerWidth,
 		height: window.innerHeight,
@@ -125,14 +147,21 @@ export abstract class WorldClient {
 
 	entities = new Map<string, EntityClient>();
 
-	constructor(public worldCore: WorldCore) {
+	constructor(public game: Game, public worldCore: WorldCore) {
 		worldCore.ee.on('+entities', (entityCore: EntityCore) => {
-			const EntityClientClassifier = EntityClientClassifiers[entityCore.constructor.name as keyof typeof EntityClientClassifiers];
+			const EntityClientClassifier
+				= WorldClient.EntityClientClassifiers[
+					entityCore.constructor
+						.name as keyof typeof WorldClient.EntityClientClassifiers
+				];
 			if (!EntityClientClassifier) {
-				throw new Error(`EntityClientClassifier not found for ${entityCore.constructor.name}`);
+				throw new Error(
+					`EntityClientClassifier not found for ${entityCore.constructor.name}`,
+				);
 			}
 
 			const entityClient = new EntityClientClassifier(this, entityCore);
+			entityClient.init();
 			this.entities.set(entityCore.id, entityClient);
 			this.app.stage.addChild(entityClient.displayObject);
 
@@ -157,13 +186,20 @@ export abstract class WorldClient {
 		});
 	}
 
+	init() {}
+
 	nextTick(tickData: TickData) {
 		this.entities.forEach(entity => {
 			entity.nextTick(tickData);
 		});
-		this.worldCore.nextTick(tickData);
 	}
 }
 
+/* ---------------------------------------------------------------------------------- */
+
 export abstract class WorldServer {
+	constructor(public worldCore: WorldCore) {}
+	init() {}
+
+	nextTick(_tickData: TickData) {}
 }
