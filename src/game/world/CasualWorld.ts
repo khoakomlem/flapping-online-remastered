@@ -1,22 +1,61 @@
-import {PipeCore} from '../entity/Pipe';
-import {WorldCore, WorldClient, WorldServer} from './World';
+import { ArraySchema, Schema, type } from '@colyseus/schema';
+import { Module } from '2d-multiplayer-world';
+import { Application } from 'pixi.js';
 
-export class CasualWorldCore extends WorldCore {
-	init() {
-		super.init();
-		for (let i = 0; i < 100; i++) {
-			const pipe = new PipeCore(this);
-			pipe.init();
-			pipe.body.pos.x = 1000 + i * 100;
-			this.add(pipe).catch(console.error);
-		}
-	}
+import { type TickData } from '@/types/TickData';
+
+import { Bird } from '../object/Bird';
+import { Pipe } from '../object/Pipe';
+
+class Block extends Schema {
+  @type('number') x: number;
+  @type('number') y: number;
 }
 
-export class CasualWorldClient extends WorldClient {
+// class MyState extends Module {
+//   @type([Block]) blocks = new ArraySchema<Block>();
+// }
+export class CasualWorld extends Module {
+  @type([Block]) test = new ArraySchema<Block>();
+  // @type([Bird]) birds = new ArraySchema<Bird>();
+  // @type([Pipe]) pipes = new ArraySchema<Pipe>();
 
-}
+  stateClient = this.clientOnly(() => ({
+    app: new Application({
+      backgroundColor: '#133a2b',
+      antialias: true,
+      resizeTo: window,
+    }),
+  }));
 
-export class CasualWorldServer extends WorldServer {
+  init() {
+    // for (let i = 0; i < 100; i++) {
+    //   const pipe = Pipe.create({
+    //     roomClient: this.roomClient,
+    //     roomServer: this.roomServer,
+    //   });
+    //   pipe.x = i * 300;
+    //   this.pipes.push(pipe);
+    //   if (this.isClientSide()) {
+    //     pipe.stateClient?.graphics.forEach((graphic) => {
+    //       this.stateClient.app.stage.addChild(graphic);
+    //     });
+    //   }
+    // }
+    // if (this.isClientSide()) {
+    //   // this.birds.forEach((bird) => {
+    //   //   if (bird.stateClient)
+    //   //     this.stateClient.app.stage.addChild(bird.stateClient.sprite);
+    //   // });
+    // }
+  }
 
+  nextTick(tickData: TickData) {
+    // // this.birds.forEach((bird) => {
+    // //   bird.nextTick(tickData);
+    // // });
+    // this.pipes.forEach((pipe) => {
+    //   pipe.nextTick(tickData);
+    // });
+  }
 }

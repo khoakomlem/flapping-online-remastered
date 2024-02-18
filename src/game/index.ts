@@ -1,3 +1,3 @@
-export * from './entity';
-export * from './player';
-export * from './world';
+export * from './object';
+export * from './player/Player';
+export * from './world/CasualWorld';
