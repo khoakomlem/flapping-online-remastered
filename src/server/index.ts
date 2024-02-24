@@ -1,5 +1,5 @@
 import { createServer } from 'http';
-import { Server } from '@colyseus/core';
+import { matchMaker, Server } from '@colyseus/core';
 import { monitor } from '@colyseus/monitor';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import cors from 'cors';
@@ -13,9 +13,14 @@ const setTerminalTitle = (text: string) => {
   );
 };
 
+const corsOptions = {
+  allowedHeaders: 'Content-Type,Authorization,X-Total-Count',
+  exposedHeaders: 'X-Total-Count',
+};
+
 const port = Number(process.env.port) || 3000;
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/colyseus', monitor());
 
@@ -36,3 +41,11 @@ await gameServer.listen(port);
 console.log(`Server listening on port ${port}`);
 
 gameServer.define('casual', RoomCasual).enableRealtimeListing();
+
+matchMaker.controller.getCorsHeaders = function (req) {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    Vary: '*',
+    // 'Vary': "<header-name>, <header-name>, ...",
+  };
+};

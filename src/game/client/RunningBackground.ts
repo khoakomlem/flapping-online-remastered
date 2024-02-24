@@ -1,24 +1,24 @@
-import * as PIXI from 'pixi.js';
+import { Sprite, type Application, type DisplayObject } from 'pixi.js';
 
 const backgroundWidth = 1366;
 const backgroundHeight = 768;
 
 export class RunningBackground {
-  bg: PIXI.Sprite[] = [];
-  runningBush: PIXI.Sprite[] = [];
-  runningCloud: PIXI.Sprite[] = [];
+  bg: Sprite[] = [];
+  runningBush: Sprite[] = [];
+  runningCloud: Sprite[] = [];
   speed = 3;
 
-  displayObjects: PIXI.DisplayObject[] = [];
+  displayObjects: DisplayObject[] = [];
 
-  constructor(public app: PIXI.Application) {
-    const bg = PIXI.Sprite.from('images/bg.png');
+  constructor() {
+    const bg = Sprite.from('images/bg.png');
     bg.scale = { x: this.scale(), y: this.scale() };
     this.displayObjects.push(bg);
 
     for (let i = 0; i < Math.ceil(window.innerWidth / 1366) + 1; i++) {
-      const runningBush = PIXI.Sprite.from('images/running-bush.png');
-      const runningCloud = PIXI.Sprite.from('images/running-cloud.png');
+      const runningBush = Sprite.from('images/running-bush.png');
+      const runningCloud = Sprite.from('images/running-cloud.png');
 
       runningBush.x = this.scale(i * backgroundWidth);
       runningBush.y = window.outerHeight - this.scale(327);
@@ -56,6 +56,14 @@ export class RunningBackground {
         this.runningCloud.push(this.runningCloud.shift()!);
       }
     });
+  }
+
+  stop() {
+    this.speed = 0;
+  }
+
+  start() {
+    this.speed = 3;
   }
 
   scale(x = 1) {

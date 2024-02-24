@@ -1,25 +1,49 @@
 import React from 'react';
 import { Game } from '@/Client';
 import { CasualPlayer, CasualWorld } from '@/game';
+import { EventData, ModuleHelper } from '2d-multiplayer-world';
 
 export const GameContext = React.createContext<{ game?: Game }>({});
 
 export function GamePage() {
   const game = React.useMemo(() => new Game(), []);
   const contextValue = React.useMemo(() => ({ game }), [game]);
-
   React.useEffect(() => {
     game
-      .connect()
-      .then(async () => {
+      .connect<CasualWorld>()
+      .then((room) => {
+        const moduleHelper = new ModuleHelper({ roomClient: room });
+        const world = moduleHelper.create(CasualWorld, {});
+        world.playerId = room.sessionId;
+        const player = CasualPlayer.create({ roomClient: room });
+        window.room = room;
+        window.world = world;
+
+        room.state.birds.onAdd((bird, key) => {
+          world.birds.get(key)?.initServer(bird);
+        });
+
+        window.player = player;
+
+        setTimeout(() => {
+          player.setCore(world.birds.get(room.sessionId));
+
+          // TODO: tìm cách gán playerId đẹp hơn
+          console.log('player core', player.core);
+          // console.log(world.birds);
+          // world.birds.forEach((bird) => {
+          //   if (bird.id === room.sessionId) {
+          //     alert(1);
+          //     player.setCore(bird);
+          //   }
+          // });
+        }, 1000);
+
+        game.start(world, player, room);
         game.init();
-        const world = CasualWorld.create({ roomClient: game.room });
-        const player = CasualPlayer.create();
-        player.core = world.birds[0];
-        game.start(world, player);
       })
       .catch(console.error);
-  });
+  }, [game]);
 
   return (
     <GameContext.Provider value={contextValue}>

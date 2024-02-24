@@ -1,9 +1,10 @@
-import { CasualWorld } from '@/game';
+import { Bird, CasualPlayer, CasualWorld } from '@/game';
 import {
   Room as RoomServer,
   type Client,
   type ClientArray,
 } from '@colyseus/core';
+import { ModuleHelper } from '2d-multiplayer-world';
 
 import { type UserData } from '@/types/UserData';
 
@@ -18,22 +19,51 @@ export class RoomCasual extends RoomServer<CasualWorld> {
   tps = 0;
   elapsedTick = 0;
   counterTpsInterval?: NodeJS.Timeout;
+  moduleHelper = new ModuleHelper({ roomServer: this });
 
   onCreate(opts: any) {
     this.eventRegister();
     this.lastTime = performance.now(); // Important: Reset the lastTime
-    const world = CasualWorld.create({ roomServer: this });
+    const world = this.moduleHelper.create(CasualWorld, {});
     this.setState(world);
     this.generateWorld();
-    this.startSimulate(128);
+    this.startSimulate(64);
+
+    this.onMessage('*', (client, type, message) => {
+      client.userData?.player.ee
+        .emit(String(type), message)
+        .catch(console.error);
+    });
   }
 
   onJoin(client: Client<UserData>, options: any) {
     console.log(client.sessionId, 'JOINED');
+
+    const player = CasualPlayer.create({ roomServer: this });
+    // TODO: chỉ đc register 1 lần event rpc, và type support
+    this.state.sendEvent({
+      name: 'rpc:addBird',
+      args: [{ x: 300 * Math.random(), id: client.sessionId }],
+    });
+    setTimeout(() => {
+      const bird = this.state.birds.get(client.sessionId);
+      if (bird) {
+        console.log('player core', player.core?.id, bird.id);
+        player.setCore(bird);
+      }
+    }, 1000);
+
+    client.userData = {
+      player,
+    };
   }
 
   onLeave(client: Client<UserData>) {
     console.log(client.sessionId, 'LEFT!');
+    this.state.sendEvent({
+      name: 'rpc:removeBird',
+      args: [client.sessionId],
+    });
     // this.state.worldCore.entities.delete(client.userData!.player.entity.id);
   }
 
@@ -41,6 +71,7 @@ export class RoomCasual extends RoomServer<CasualWorld> {
     this.pause();
   }
 
+  // TODO: use this.clock.start();
   simulate(targetTps = 64) {
     // Const magicNumber = (0.46 * 128 / targetTps); // Based on 128 tps, best run on 1-1000tps
     // const magicNumber2 = (0.41 * 128 / targetTps); // Based on 128 tps, best run on 2000-10000tps
@@ -104,7 +135,7 @@ export class RoomCasual extends RoomServer<CasualWorld> {
     this.counterTpsInterval = setInterval(() => {
       this.tps = this.elapsedTick;
       this.elapsedTick = 0;
-      console.log('TPS: ', this.tps);
+      // console.log('TPS: ', this.tps);
     }, 1000);
   }
 
