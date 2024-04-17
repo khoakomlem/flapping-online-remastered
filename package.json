@@ -11,7 +11,7 @@
     "client-dev": "next dev --port 5173",
     "client-build": "next build",
     "client-start": "next start",
-    "watch-server": "nodemon --exec \"ts-node-esm --project=tsconfig.json -r tsconfig-paths/register --experimental-specifier-resolution=node ./src/server\" --watch src -e ts",
+    "watch-server": "nodemon --exec \"esno --tsconfig=tsconfig.json ./src/server\" --watch src -e ts",
     "run-ts": "cross-env SWCRC=true node --enable-source-maps --import @swc-node/register/esm-register",
     "format": "eslint --fix .",
     "check": "tsc --project ./tsconfig.json --noEmit"
@@ -31,6 +31,7 @@
     "next": "^14.1.0",
     "next-intl": "^3.4.5",
     "p-retry": "^6.2.0",
+    "pixi-viewport": "^5.0.2",
     "pixi.js": "7.3.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -35,7 +35,7 @@ export class Game {
 
   findAndAttachServerState(component: Module, serverState: Module) {
     // debugger;
-    // console.log('findAndAttachServerState', component.constructor.name);
+    console.log('findAndAttachServerState', component.constructor.name);
 
     component.initServer(serverState);
     // eslint-disable-next-line guard-for-in
@@ -86,7 +86,10 @@ export class Game {
   ) {
     // Auto attach server state to modules (only support Schema + ArraySchema), maybe not support ArraySchema<ArraySchema>
     if (room) {
-      this.findAndAttachServerState(world, room.state);
+      world.awatingClientState?.then((a) => {
+        console.log(a, world.stateClient);
+        this.findAndAttachServerState(world, room.state);
+      });
     }
 
     const gameRoot = document.getElementById('gameRoot');

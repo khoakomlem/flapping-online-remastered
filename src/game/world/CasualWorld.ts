@@ -1,4 +1,3 @@
-// @ts-expect-error - not found type
 import { zzfxPolyfill } from '@/util/zzfx-polyfill';
 import {
   ArraySchema,
@@ -11,11 +10,11 @@ import {
   type EventData,
 } from '2d-multiplayer-world';
 import { Howl, Howler } from 'howler';
-import { Application } from 'pixi.js';
+// import { type Viewport } from 'pixi-viewport';
+import { Application, EventSystem } from 'pixi.js';
 import uniqid from 'uniqid';
-import zzfx from 'zzfx';
 
-import { type TickData } from '@/types/TickData';
+import type { TickData } from '@/types/TickData';
 
 import { RunningBackground } from '../client/RunningBackground';
 import { Bird } from '../object/Bird';
@@ -38,26 +37,51 @@ export class CasualWorld extends Module {
     'rpc:addPipe': (args: Parameters<Pipe['init']>[0]) => 'Bird';
   }>;
 
-  stateClient = this.clientOnly(() => ({
-    app: new Application({
+  async initClient() {
+    const app = new Application({
       backgroundColor: '#133a2b',
       antialias: true,
       resizeTo: window,
-    }),
-    runningBg: new RunningBackground(),
-    sound: new Howl({
-      src: ['sound/flap.mp3'],
-    }),
-    zzfx: zzfxPolyfill(),
-  }));
+    });
+
+    // @ts-expect-error debugging
+    globalThis.__PIXI_APP__ = app;
+
+    // https://github.com/davidfig/pixi-viewport/issues/441#issuecomment-1628206981
+    const events = new EventSystem(app.renderer);
+    // @ts-expect-error events.domElement is not defined in @pixi/viewport
+    events.domElement = app.renderer.view;
+
+    const exports = {
+      app,
+      runningBg: new RunningBackground(),
+      sound: new Howl({
+        src: ['sound/flap.mp3'],
+      }),
+      zzfx: zzfxPolyfill(),
+      viewport: undefined as unknown as InstanceType<typeof Viewport>,
+    };
+
+    const Viewport = await import('pixi-viewport').then((mod) => mod.Viewport);
+    const viewport = new Viewport({
+      screenWidth: app.screen.width,
+      screenHeight: app.screen.height,
+      events,
+    });
+    exports.viewport = viewport;
+
+    viewport.addChild(viewport);
+
+    exports.runningBg.displayObjects.forEach((displayObject) => {
+      viewport.addChildAt(displayObject, 0);
+    });
+    return exports;
+  }
 
   init() {
     // TODO: fix single player + server side
-    if (this.isClientSide()) {
-      this.stateClient.runningBg.displayObjects.forEach((displayObject) => {
-        this.stateClient.app.stage.addChild(displayObject);
-      });
-    } else {
+    // TODO: neu ko xai if !isClient thi se lag vcl
+    if (!this.isClientSide()) {
       for (let i = 0; i < 100; i++) {
         this.sendEvent({
           name: 'rpc:addPipe',
@@ -66,10 +90,14 @@ export class CasualWorld extends Module {
               id: uniqid(),
               seed: Math.random(),
               x: 1366 + i * 500,
-              type: PipeType.Big,
-              // type: [PipeType.Normal, PipeType.Unstable, PipeType.UpDown][
-              //   Math.floor(Math.random() * 3)
-              // ],
+              // type: PipeType.Big,
+              type: [
+                PipeType.Normal,
+                PipeType.Unstable,
+                PipeType.UpDown,
+                PipeType.Small,
+                PipeType.Big,
+              ][Math.floor(Math.random() * 5)],
             },
           ],
         });
@@ -82,19 +110,19 @@ export class CasualWorld extends Module {
       //   })
       // );
 
-      this.test.initEvent({ roomServer: this.helper.roomServer });
-      this.test.helper = this.helper;
-      this.test.sendEvent({
-        name: 'testing',
-        args: [],
-      });
+      // this.test.initEvent({ roomServer: this.helper.roomServer });
+      // this.test.helper = this.helper;
+      // this.test.sendEvent({
+      //   name: 'testing',
+      //   args: [],
+      // });
 
-      const tet = this.helper.create(Test, {});
-      this.test2.push(tet);
-      tet.sendEvent({
-        name: 'testing',
-        args: [],
-      });
+      // const tet = this.helper.create(Test, {});
+      // this.test2.push(tet);
+      // tet.sendEvent({
+      //   name: 'testing',
+      //   args: [],
+      // });
     }
   }
 
@@ -136,7 +164,7 @@ export class CasualWorld extends Module {
     });
     this.birds.set(bird.id, bird);
     if (this.isClientSide() && bird.isClientSide()) {
-      this.stateClient.app.stage.addChild(bird.stateClient.display);
+      this.stateClient.viewport.addChild(bird.stateClient.display);
     }
 
     return bird;
@@ -147,7 +175,7 @@ export class CasualWorld extends Module {
     if (bird) {
       this.birds.delete(id);
       if (this.isClientSide() && bird.isClientSide()) {
-        this.stateClient.app.stage.removeChild(bird.stateClient.display);
+        this.stateClient.viewport.removeChild(bird.stateClient.display);
       }
     }
   }
@@ -155,9 +183,11 @@ export class CasualWorld extends Module {
   addPipe(data: any) {
     const pipe = this.helper.create(Pipe, data);
     this.pipes.set(pipe.id, pipe);
+    console.log('addPipe', pipe.id, pipe.x, pipe.seed, pipe.type);
     if (this.isClientSide() && pipe.stateClient) {
       pipe.stateClient.graphics.forEach((graphic) => {
-        this.stateClient.app.stage.addChild(graphic);
+        this.stateClient.viewport.addChild(graphic);
+        // console.log('add');
       });
     }
 

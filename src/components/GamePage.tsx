@@ -39,8 +39,8 @@ export function GamePage() {
           // });
         }, 1000);
 
-        game.start(world, player, room);
         game.init();
+        game.start(world, player, room);
       })
       .catch(console.error);
   }, [game]);

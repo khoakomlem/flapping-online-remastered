@@ -41,7 +41,7 @@ export class Bird extends Module {
       if (this.world.playerId === this.id) {
         this.stateClient.display.addChild(choosingGraph());
       } else {
-        sprite.tint = 0x000000;
+        sprite.alpha = 0.3;
       }
     }
   }
@@ -57,12 +57,11 @@ export class Bird extends Module {
       return;
     }
 
-    if (this.isClientSide()) {
+    if (this.isClientSide() && this.world.playerId === this.id) {
       // this.world.stateClient?.sound.play();
       // @ts-expect-error amogus
       // eslint-disable-next-line prettier/prettier, no-sparse-arrays
       this.world.stateClient?.zzfx(...[, , 395, 0.01, 0.03, 0.09, , 1.2, 0.9, , , , , , , , , , 0.06]);
-      console.log('flap!');
     }
 
     this.velocity.y = -13;
@@ -122,6 +121,8 @@ export class Bird extends Module {
 
       if (this.isDead) {
         this.stateClient.sprite.rotation -= 0.2;
+      } else {
+        this.stateClient.sprite.rotation = this.velocity.y / 40;
       }
     }
   }

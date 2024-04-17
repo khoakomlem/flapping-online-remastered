@@ -4,7 +4,7 @@ import {
   type Client,
   type ClientArray,
 } from '@colyseus/core';
-import { ModuleHelper } from '2d-multiplayer-world';
+import { ModuleHelper, Player } from '2d-multiplayer-world';
 
 import { type UserData } from '@/types/UserData';
 
@@ -29,17 +29,13 @@ export class RoomCasual extends RoomServer<CasualWorld> {
     this.generateWorld();
     this.startSimulate(64);
 
-    this.onMessage('*', (client, type, message) => {
-      client.userData?.player.ee
-        .emit(String(type), message)
-        .catch(console.error);
-    });
+    Player.initServer(this);
   }
 
   onJoin(client: Client<UserData>, options: any) {
     console.log(client.sessionId, 'JOINED');
 
-    const player = CasualPlayer.create({ roomServer: this });
+    const player = CasualPlayer.create({});
     // TODO: chỉ đc register 1 lần event rpc, và type support
     this.state.sendEvent({
       name: 'rpc:addBird',
