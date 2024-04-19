@@ -1,7 +1,5 @@
-import { type } from "@colyseus/schema";
-import { field } from "@lastolivegames/becsy";
+import { Types, defineComponent } from "bitecs";
 
-export class Bird {
-	@field.float64 @type("number") declare gravity: number;
-	@field.float64 @type("number") declare lift: number;
-}
+export const Bird = defineComponent({
+	lift: Types.f32,
+});
