@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import React from 'react';
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
+import React from "react";
 
 const GamePage = dynamic(
-  async () => import('@/components/GamePage').then((mod) => mod.GamePage),
-  {
-    ssr: false,
-  }
+	async () => import("@/components/GamePage").then((mod) => mod.GamePage),
+	{
+		ssr: false,
+	},
 );
 
 function RootPage() {
-  return <GamePage />;
+	return <GamePage />;
 }
 
 export default dynamic(async () => Promise.resolve(RootPage), {
-  ssr: false,
+	ssr: false,
 });

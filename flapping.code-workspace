@@ -1,11 +1,11 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../2d-multiplayer-world"
-		}
-	],
-  "settings": {}
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../game-workspace/becsy",
+    },
+  ],
+  "settings": {},
 }

@@ -82,8 +82,5 @@
     "postcss.config.cjs",
     ".next/types/**/*.ts",
     "src/types/global.d.ts"
-  ],
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  }
+  ]
 }
