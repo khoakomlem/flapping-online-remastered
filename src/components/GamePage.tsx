@@ -1,7 +1,7 @@
 "use client";
 import { Game } from "@/Client";
-import { createBird } from "@/game/entities/createEntity";
 import { createCasualWorld } from "@/game/worlds/createCasualWorld";
+import { Bird, Pipe } from "@/game/entities";
 import type { World } from "@lastolivegames/becsy";
 import { createContext, useEffect, useMemo, useState } from "react";
 import { useIsMounted } from "usehooks-ts";
@@ -20,9 +20,15 @@ export function GamePage() {
 			createCasualWorld()
 				.then((world) => {
 					const game = new Game();
+					world.createEntity(
+						...Pipe.create({
+							x: 700,
+							y: 100,
+						}),
+					);
 					game.start(
 						world,
-						createBird({
+						Bird.create({
 							x: 100,
 							y: 100,
 						}),

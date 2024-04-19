@@ -1,14 +1,18 @@
 import { System } from "@lastolivegames/becsy";
 import { Velocity } from "../components/Velocity";
 import { Keypressed } from "../components/Keypressed";
-import { Bird } from "../components/Bird";
+import { PipeMovement } from "./PipeMovement";
 
 export class VelocityInputController extends System {
 	private readonly entities = this.query(
-		(q) =>
-			q.current.with(Bird).and.with(Velocity).write.and.with(Keypressed).write,
+		(q) => q.current.with(Velocity).write.and.with(Keypressed).write,
 	);
 	private readonly keysPressed = new Set<string>();
+
+	constructor() {
+		super();
+		this.schedule((s) => s.inAnyOrderWith(s.allSystems));
+	}
 
 	initialize(): void {
 		document.addEventListener("keydown", (event: KeyboardEvent) => {

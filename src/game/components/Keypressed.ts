@@ -1,5 +1,4 @@
 import { Type, field } from "@lastolivegames/becsy";
-import type { DisplayObject } from "pixi.js";
 
 export class Keypressed {
 	@field.boolean declare up: boolean;

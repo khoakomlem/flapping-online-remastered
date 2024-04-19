@@ -8,9 +8,9 @@
 	"repository": "https://github.com/khoakomlem/flapping-online-remastered",
 	"main": "index.js",
 	"scripts": {
-		"client-dev": "next dev --port 5173",
-		"client-build": "next build",
-		"client-start": "next start",
+		"dev": "next dev --port 5173",
+		"build": "next build",
+		"start": "next start",
 		"watch-server": "nodemon --exec \"esno --tsconfig=tsconfig.json ./src/server\" --watch src -e ts",
 		"run-ts": "cross-env SWCRC=true node --enable-source-maps --import @swc-node/register/esm-register",
 		"format": "biome format src",

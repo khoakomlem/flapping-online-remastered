@@ -1,14 +1,14 @@
-import { World } from "@lastolivegames/becsy";
+import { System, World } from "@lastolivegames/becsy";
 import { Position } from "../components/Position";
 import { Velocity } from "../components/Velocity";
 import { VelocityInputController } from "../systems/VelocityInputController";
 import { Movement } from "../systems/Movement";
 import { Renderer } from "../systems/Renderer";
 import { PixiDisplay } from "../components/PixiDisplay";
-import { Bird } from "../components/Bird";
 import { Keypressed } from "../components/Keypressed";
-import { Pipe } from "../components/Pipe";
 import { PipeMovement } from "../systems/PipeMovement";
+import { Lift } from "../components/Lift";
+import { Accelerator } from "../components/Accelerator";
 
 export function createCasualWorld() {
 	return World.create({
@@ -17,12 +17,14 @@ export function createCasualWorld() {
 			Velocity,
 			Keypressed,
 			PixiDisplay,
-			Bird,
-			Pipe,
-			PipeMovement,
-			VelocityInputController,
+			Lift,
+			Accelerator,
 			Movement,
 			Renderer,
+			PipeMovement,
+			VelocityInputController,
 		],
+		threads: 1,
+		// defaultComponentStorage:'compact'
 	});
 }
